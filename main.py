@@ -1,8 +1,12 @@
 import serial
+import matplotlib.pyplot as plt
+import asyncio
 import time
-import struct
+import threading
 import math
+import numpy as np
 
+# Connect to UART
 ser = serial.Serial('COM37', baudrate = 115200, timeout=1)
 
 flag = 0
@@ -76,6 +80,10 @@ while True:
             print('*'*50)
             break
 
+dataStreamDistance = []
+dataStreamAngle = []
+
+dataAngleToDistance = np.zeros(360)
 while True:
     message = ser.read()
     
@@ -132,7 +140,23 @@ while True:
                     Ar = math.atan2(21.8*(155.3-Distance),(155.3*Distance))
 
                 trueAngle = A + Ar
+                Angle = int(round(trueAngle))
 
-                print("Data%d : %.2f"%((i+1),Distance)+" - %.2f"%trueAngle)
+                if Distance != 0:
+                    
+                    dataStreamDistance.append(Distance)
+                    dataStreamAngle.append(Angle)
+                    dataAngleToDistance[Angle] = Distance
 
-            print('*'*50)
+                # print("Data%d : %.2f"%((i+1),Distance)+" - %.2f"%trueAngle)
+            # print('*'*150)
+            Xraw = []
+            Yraw = []
+            for i in range(0,360):
+                if dataAngleToDistance[i] > 1:
+                    Xraw.append((math.cos(math.radians(i)))*dataAngleToDistance[i])
+                    Yraw.append((math.sin(math.radians(i)))*dataAngleToDistance[i])
+            plt.clf()
+            plt.scatter(Xraw, Yraw)
+            plt.pause(.1)
+    plt.show()
